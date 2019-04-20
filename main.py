@@ -49,10 +49,10 @@ async def serve(reader, writer):
     print('connected')
     await writer.awrite('"hello"\n')
     while True:
-        line = (await reader.readline()).decode().strip()
+        line = (await reader.readline()).decode()
         if line == '':
             break
-        print(line)
+        print(line.strip())
         try:
             command = json.loads(line)
         except ValueError:
