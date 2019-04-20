@@ -14,21 +14,26 @@ class Motor:
         self.pwm = PWM(Pin(en, Pin.OUT), freq=100, duty=0)
 
     def __call__(self, value):
-        if value < 0:
-            value = -value
+        if value == 0:
+            # Brake
             self.a(0)
-            self.b(1)
-        else:
-            self.a(1)
             self.b(0)
-        self.pwm.duty(value)
+            self.pwm.duty(1)
+        else:
+            if value < 0:
+                value = -value
+                self.a(0)
+                self.b(1)
+            else:
+                self.a(1)
+                self.b(0)
+            self.pwm.duty(value)
 
 motors = [
     Motor(21, 22, 23),
     Motor(5, 18, 19),
     Motor(2, 15, 4),
 ]
-
 
 wlan = network.WLAN(network.STA_IF)
 wlan.active(False)
