@@ -14,7 +14,7 @@ SHORTEN = 4
 
 window = pyglet.window.Window(width=SIZE,height=SIZE, resizable=True)
 speeds = [0, 0, 0]
-attrs = [0, 0]
+attrs = [0, 0, 0]
 
 label = pyglet.text.Label('0', y=SMALL_R)
 
@@ -76,21 +76,30 @@ def on_draw():
 
 @window.event
 def on_mouse_drag(x, y, dx, dy, buttons, modifiers):
-    send(x, y)
+    if buttons & pyglet.window.mouse.LEFT:
+        set_xy(x, y)
 
 
 @window.event
 def on_mouse_press(x, y, buttons, modifiers):
-    send(x, y)
+    if buttons & pyglet.window.mouse.LEFT:
+        set_xy(x, y)
 
 
 @window.event
 def on_mouse_release(x, y, buttons, modifiers):
-    send(window.width/2, window.height/2)
-    send_position()
+    if buttons & pyglet.window.mouse.LEFT:
+        set_xy(window.width/2, window.height/2)
+        send_position()
 
 
-def send(x, y):
+@window.event
+def on_mouse_scroll(x, y, scroll_x, scroll_y):
+    attrs[2] += scroll_y
+    set_position()
+
+
+def set_xy(x, y):
     x -= window.width/2
     y -= window.height/2
     factor = min(window.width/SIZE, window.height/SIZE)
@@ -100,11 +109,15 @@ def send(x, y):
     if distance > 1000:
         distance = 1000
     angle = math.atan2(y, x) + math.tau/6
-    speeds[0] = distance
+    attrs[:2] = angle, distance
+    set_position()
+
+
+def set_position():
+    angle, distance, z = attrs
     for i in range(3):
         motor_angle = math.tau / 3 * i
-        speeds[i] = int(math.cos(motor_angle - angle) * distance)
-    attrs[:] = angle, distance
+        speeds[i] = int(math.cos(motor_angle - angle) * distance) + z * 10
 
 
 def send_position(dt=None):
