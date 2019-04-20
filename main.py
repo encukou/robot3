@@ -49,7 +49,10 @@ async def serve(reader, writer):
     print('connected')
     await writer.awrite('"hello"\n')
     while True:
-        line = (await reader.readline()).decode()
+        try:
+            line = (await reader.readline()).decode()
+        except OSError:
+            continue
         if line == '':
             break
         print(line.strip())
