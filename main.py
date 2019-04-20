@@ -2,6 +2,10 @@ import network
 import socket
 from time import sleep
 from machine import Pin, PWM
+import uasyncio as asyncio
+import json
+
+from wificonfig import wifi_essid, wifi_password
 
 class Motor:
     def __init__(self, a, b, en):
@@ -26,40 +30,47 @@ motors = [
 ]
 
 
-
 wlan = network.WLAN(network.STA_IF)
 wlan.active(False)
 wlan.active(True)
-wlan.connect('ESSID', 'PWD') # connect to an AP
+wlan.connect(wifi_essid, wifi_password) # connect to an AP
 while not wlan.isconnected():
     print('connecting...')
     sleep(1)
 print(wlan.ifconfig())
 
 
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server_address = ('0.0.0.0', 29842)
-sock.bind(server_address)
-sock.listen(1)
-
-while True:
-    connection, client_address = sock.accept()
-    print('connected to', client_address)
-    connection.setblocking(0)
-
-    data = ''
+async def serve(reader, writer):
+    print('connected')
+    await writer.awrite('"hello"\n')
     while True:
+        line = (await reader.readline()).decode().strip()
+        if line == '':
+            break
+        print(line)
         try:
-            received = connection.recv(32).decode()
-            if not received:
-                print('disconnected')
-                break
-        except OSError:
-            pass
+            command = json.loads(line)
+        except ValueError:
+            print('bad value')
         else:
-            print('got', repr(received))
-            data += received
-        while '\n' in data:
-            command, sep, data = data.partition('\n')
-            print(command)
-        sleep(1/10)
+            print('command', command)
+            if isinstance(command, list):
+                for motor, speed in zip(motors, command):
+                    print('setting', motor, 'to', speed)
+                    motor(speed)
+    print('disconnected')
+    await writer.aclose()
+
+async def reset_loop():
+    boot_pin = Pin(0, Pin.IN)
+    while True:
+        if not boot_pin():
+            for motor in motors:
+                motor(0)
+        await asyncio.sleep_ms(50)
+
+
+loop = asyncio.get_event_loop()
+loop.call_soon(asyncio.start_server(serve, "0.0.0.0", 29842))
+loop.run_forever()
+loop.close()
