@@ -33,7 +33,7 @@ label = pyglet.text.Label('0', y=SMALL_R)
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_address = ('192.168.0.46', 29842)
-server_address = ('192.168.0.36', 29842)
+#server_address = ('192.168.0.36', 29842)
 sock.connect(server_address)
 
 
