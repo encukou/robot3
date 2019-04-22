@@ -215,12 +215,13 @@ def drive():
         if key & 0xFF == ord('s'):
             cv2.imwrite('scsh.jpg', frame)
 
+        corners, ids, rejected = cv2.aruco.detectMarkers(frame, board.dictionary)
+
         if target is None:
             target = Object2D(np.array([[0, 0], [w, 0], [0, h], [w, h]]))
         if drawing:
             target.draw(frame)
 
-        corners, ids, rejected = cv2.aruco.detectMarkers(frame, board.dictionary)
         if ids is not None:
             diamond_corners, diamond_ids = cv2.aruco.detectCharucoDiamond(
                 frame, corners, ids, 1/0.6)
