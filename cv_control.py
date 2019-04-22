@@ -1,10 +1,12 @@
 from pathlib import Path
 import glob
 import math
+import json
 
 import numpy as np
 import cv2
 import click
+import socket
 
 @click.group()
 def main():
@@ -175,6 +177,11 @@ def drive():
             dist_coeffs = npz['dist_coeffs']
         drawing = True
 
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_address = ('192.168.0.46', 29842)
+    server_address = ('192.168.1.75', 29842)
+    sock.connect(server_address)
+
     cap = cv2.VideoCapture(0)
     board = _get_board()
 
@@ -202,7 +209,7 @@ def drive():
     while True:
         ret, frame = cap.read()
         #frame = cv2.imread('scsh.jpg')
-        frame = cv2.imread('scsh.png')
+        #frame = cv2.imread('scsh.png')
         h,  w = frame.shape[:2]
 
         if drawing:
@@ -222,6 +229,7 @@ def drive():
         if drawing:
             target.draw(frame)
 
+        speeds = np.zeros(3)
         if ids is not None:
             diamond_corners, diamond_ids = cv2.aruco.detectCharucoDiamond(
                 frame, corners, ids, 1/0.6)
@@ -335,6 +343,9 @@ def drive():
 
         if drawing:
             cv2.imshow('frame', frame)
+
+        message = json.dumps([int(s) for s in speeds]).encode() + b'\n'
+        sock.sendall(message)
 
     cap.release()
     cv2.destroyAllWindows()
