@@ -35,6 +35,10 @@ sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_address = ('192.168.0.46', 29842)
 #server_address = ('192.168.0.36', 29842)
 server_address = ('192.168.1.75', 29842)
+server_address = ('192.168.0.117', 29842)
+server_address = ('192.168.1.183', 29842)
+server_address = ('10.0.26.188', 29842)
+server_address = ('192.168.4.1', 29842)
 sock.connect(server_address)
 
 
@@ -173,7 +177,8 @@ def _clamp(speed):
 
 
 def send_position(dt=None):
-    message = json.dumps([_clamp(s) for s in speeds]).encode() + b'\n'
+    speeds2 = -speeds[0], -speeds[2], -speeds[1]
+    message = json.dumps([_clamp(s) for s in speeds2]).encode() + b'\n'
     sock.sendall(message)
 
 pyglet.clock.schedule_interval(send_position, 1/10)

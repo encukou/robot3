@@ -5,10 +5,12 @@ from machine import Pin, PWM
 import uasyncio as asyncio
 import json
 
+import wificonfig
 from wificonfig import wifi_essid, wifi_password
+wifi_mode = getattr(wificonfig, 'wifi_mode', 'STA')
 
 class Motor:
-    def __init__(self, a, b, en):
+    def __init__(self, en, a, b):
         self.a = Pin(a, Pin.OUT)
         self.b = Pin(b, Pin.OUT)
         self.pwm = PWM(Pin(en, Pin.OUT), freq=100, duty=0)
@@ -30,19 +32,25 @@ class Motor:
             self.pwm.duty(value)
 
 motors = [
+    Motor(17, 18, 19),
     Motor(21, 22, 23),
-    Motor(5, 18, 19),
-    Motor(2, 15, 4),
+    Motor(25, 26, 27),
 ]
 
-wlan = network.WLAN(network.STA_IF)
-wlan.active(False)
-wlan.active(True)
-wlan.connect(wifi_essid, wifi_password) # connect to an AP
-while not wlan.isconnected():
-    print('connecting...')
-    sleep(1)
-print(wlan.ifconfig())
+if wifi_mode == 'AP':
+    ap_if = network.WLAN(network.AP_IF)
+    ap_if.active(True)
+    ap_if.config(essid=wifi_essid, password=wifi_password, authmode=network.AUTH_WEP, channel=4)
+    print('network config:', ap_if.ifconfig())
+else:
+    wlan = network.WLAN(network.STA_IF)
+    wlan.active(False)
+    wlan.active(True)
+    wlan.connect(wifi_essid, wifi_password) # connect to an AP
+    while not wlan.isconnected():
+        print('connecting...')
+        sleep(1)
+    print(wlan.ifconfig())
 
 
 async def serve(reader, writer):
